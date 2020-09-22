@@ -37,33 +37,29 @@ std::vector<Bilddatei> getAlleBilddateien(const string& dirPath)
 		if (fs::exists(dirPath) && fs::is_directory(dirPath))
 		{
 			fs::recursive_directory_iterator iter(dirPath,
-				fs::directory_options::skip_permission_denied 
+				fs::directory_options::skip_permission_denied
 				| fs::directory_options::follow_directory_symlink);
 			
-			fs::recursive_directory_iterator end; // (dirPath.cend());
+			fs::recursive_directory_iterator end;
 			
 			while (iter != end)
 			{
 				if (true)
 				{
 					filesystem::path pathToShow(iter->path());
-
 					auto extension = pathToShow.extension().string();
-					
 					transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
-					
 					if(extension ==".jpg" ||
 						extension == ".jpeg" ||
 						extension == ".bmp" ||
 						extension == ".heic" ||
 						extension == ".heiv" ||
-						extension == ".png"
+						extension == ".png" ||
+						extension == ".raw" ||
+						extension==".tif"
 						)
 					{
-						cout << "Bild: " << pathToShow.parent_path().string()
-							<< '/' << pathToShow.stem().string()
-							<< extension << endl;
-						
+						// cout << "Bild: " << pathToShow.parent_path().string() << '/' << pathToShow.stem().string() << extension << endl;
 						Bilddatei datei
 						{
 							pathToShow.parent_path().generic_string(),
@@ -95,18 +91,20 @@ std::vector<Bilddatei> getAlleBilddateien(const string& dirPath)
 int main(int argc, const char *argv[])
 {
 	string path = argv[1];
-	path = "C:/Users";
+	path = "C:\\Users";
 	
-	cout << "Durchsuche Ordner: " << path << endl;
+	cout << "\nDurchsuche Ordner: " << path << endl;
 	
 	// durchsuche den Ordner nach normalen Dateien mit einer Länge von mind. x Bytes
 	
 	auto liste = getAlleBilddateien(path);
 
+	cout << "\nDateien wurden ermittelt!" << endl;
+	
 	// alle Bilddateien in die Datenbank eintragen
 	// erstelle eine neue Datenbank
 	sqlite3* db;
-	sqlite3_open("c:/sqlite3/BilderC3.sqlite", &db);
+	sqlite3_open("c:/sqlite3/BilderC6.sqlite", &db);
 
 	string createSql = "create table Bild(pfad nvarchar(8000), name nvarchar(1000), extension nvarchar(16), size long, hash int);";
 
