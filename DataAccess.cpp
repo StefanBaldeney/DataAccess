@@ -15,9 +15,9 @@ namespace fs = filesystem;
 
 struct Bilddatei
 {
-	wstring Pfad;
-	wstring Dateiname;
-	wstring Extension;
+	string Pfad;
+	string Dateiname;
+	string Extension;
 	unsigned long Size;
 	int Hash;
 };
@@ -36,13 +36,15 @@ std::vector<Bilddatei> getAlleBilddateien(const string& dirPath)
 	try {
 		if (fs::exists(dirPath) && fs::is_directory(dirPath))
 		{
-			fs::recursive_directory_iterator iter(dirPath);
+			fs::recursive_directory_iterator iter(dirPath,
+				fs::directory_options::skip_permission_denied 
+				| fs::directory_options::follow_directory_symlink);
+			
 			fs::recursive_directory_iterator end; // (dirPath.cend());
 			
 			while (iter != end)
 			{
-				// ignoriere Ordner und Verknüpfungen
-				if (iter->is_regular_file())
+				if (true) //iter->is_regular_file() || iter->is_directory())
 				{
 					filesystem::path pathToShow(iter->path());
 
@@ -60,13 +62,13 @@ std::vector<Bilddatei> getAlleBilddateien(const string& dirPath)
 					{
 						cout << "Bild: " << pathToShow.parent_path().string()
 							<< '/' << pathToShow.stem().string()
-							<< extension << "\n";
+							<< extension << endl;
 						
 						Bilddatei datei
 						{
-							pathToShow.parent_path().generic_wstring(),
-							pathToShow.stem().generic_wstring(),
-							pathToShow.extension().generic_wstring(),
+							pathToShow.parent_path().generic_string(),
+							pathToShow.stem().generic_string(),
+							pathToShow.extension().generic_string(),
 							file_size(pathToShow),
 							(int)0
 						};
@@ -84,26 +86,56 @@ std::vector<Bilddatei> getAlleBilddateien(const string& dirPath)
 	}
 	catch (std::system_error& e)
 	{
-		cerr << "Exception :: " << e.what();
+		//cerr << "Exception :: " << e.what();
+		cout << "Exception :: " << e.what();
 	}
 	return dateiListe;
 }
 
 int main(int argc, const char *argv[])
 {
-	cout << "Durchsuche Ordner: " << argv[1] << endl;
+	string path = argv[1];
+	path = "C:/Users";
+	
+	cout << "Durchsuche Ordner: " << path << endl;
 	
 	// durchsuche den Ordner nach normalen Dateien mit einer Länge von mind. x Bytes
-
-	std::string path = argv[1];
+	
 	auto liste = getAlleBilddateien(path);
 
 	// alle Bilddateien in die Datenbank eintragen
+	// erstelle eine neue Datenbank
+	sqlite3* db;
+	sqlite3_open("c:/sqlite3/BilderC.sqlite", &db);
 
+	string createSql = "create table Bild(pfad nvarchar(8000), name nvarchar(1000), extension nvarchar(16), size long, hash int);";
+
+	char* err;
+	int rc;
+    rc = sqlite3_exec(db, createSql.c_str(), callback, 0, &err);
+
+	for (vector<Bilddatei>::iterator it = liste.begin(); it != liste.end(); ++it) {
+
+		string insertSQL{ "insert into Bild VALUES(" };
+
+		insertSQL.append("\"");
+		insertSQL.append((*it).Pfad);
+		insertSQL.append("\",\"");
+		insertSQL.append((*it).Dateiname);
+		insertSQL.append("\",\"");
+		insertSQL.append((*it).Extension);
+		insertSQL.append("\",");
+		insertSQL.append(to_string((*it).Size));
+		insertSQL.append(",");
+		insertSQL.append(to_string((*it).Hash));
+		insertSQL.append(");");
+		
+		cout << insertSQL << endl;
+
+		rc = sqlite3_exec(db, insertSQL.c_str(), callback, 0, &err);
+	}
 	
-	
-	// create database Bilddateien
-	// Filename, Pfad, Size, Hash
-	// 
+	sqlite3_free(err);
+	sqlite3_close(db);
 }
 
