@@ -44,7 +44,7 @@ std::vector<Bilddatei> getAlleBilddateien(const string& dirPath)
 			
 			while (iter != end)
 			{
-				if (true) //iter->is_regular_file() || iter->is_directory())
+				if (true)
 				{
 					filesystem::path pathToShow(iter->path());
 
@@ -106,7 +106,7 @@ int main(int argc, const char *argv[])
 	// alle Bilddateien in die Datenbank eintragen
 	// erstelle eine neue Datenbank
 	sqlite3* db;
-	sqlite3_open("c:/sqlite3/BilderC.sqlite", &db);
+	sqlite3_open("c:/sqlite3/BilderC3.sqlite", &db);
 
 	string createSql = "create table Bild(pfad nvarchar(8000), name nvarchar(1000), extension nvarchar(16), size long, hash int);";
 
@@ -130,7 +130,7 @@ int main(int argc, const char *argv[])
 		insertSQL.append(to_string((*it).Hash));
 		insertSQL.append(");");
 		
-		cout << insertSQL << endl;
+		//cout << insertSQL << endl;
 
 		rc = sqlite3_exec(db, insertSQL.c_str(), callback, 0, &err);
 	}
